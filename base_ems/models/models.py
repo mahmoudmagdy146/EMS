@@ -14,10 +14,18 @@ class Course(models.Model):
     is_package = fields.Boolean(string="Package", )
     child_ids = fields.Many2many(comodel_name="ems.course", relation="course_package_rel", column1="course_id",
                                  column2="child_ids", string="Child Courses", domain=[('is_package', '=', False)])
+    type = fields.Selection(string="Type", selection=[('course', 'Course'), ('package', 'Package'), ], required=False, )
 
     _sql_constraints = [
         ('check_positive_default_hours', 'check(default_hours > 1)', "Default hours should be greater than 1.",)
     ]
+
+    @api.onchange('is_package')
+    def type_change(self):
+        if not self.is_package:
+            self.type = 'course'
+        else:
+            self.type = 'package'
 
     @api.onchange('child_ids')
     def _onchange_child_ids(self):
@@ -35,15 +43,6 @@ class Branch(models.Model):
     sequence = fields.Char(string="ID", required=False, )
     name = fields.Char(string="Branch Name", required=True, )
     address = fields.Text(string="Address", required=False, )
-
-
-class Round(models.Model):
-    _name = 'ems.round.status'
-    _rec_name = 'name'
-    _description = 'EMS Round'
-
-    name = fields.Char(string='Name', required=True)
-    sequence = fields.Char(string='ID', required=False)
 
 
 class RoundType(models.Model):
@@ -85,3 +84,12 @@ class EMSBranchLabs(models.Model):
     _sql_constraints = [
         ('check_positive_seats_count', 'check(default_hours > 0)', "Default hours should be greater than 1."),
     ]
+
+
+class Student(models.Model):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+
+    payment = fields.Selection(string="Payment Method", selection=[('cash', 'Cash'), ('bank', 'Bank Transfer'), ], required=False, )
+    mobile = fields.Char(string="Mobile", required=False,)
+    mail = fields.Char(string="E-mail", required=False,)
